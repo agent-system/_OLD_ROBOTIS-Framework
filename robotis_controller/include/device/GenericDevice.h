@@ -1,6 +1,6 @@
 /*
  *=====================================================
- * File   :  DXL.h
+ * File   :  GenericDevice.h
  * Author :  zerom <zerom@robotis.com>
  * Copyright (C) ROBOTIS, 2015
  *=====================================================
@@ -19,19 +19,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#ifndef DYNAMIXEL_H_
-#define DYNAMIXEL_H_
+#ifndef GENERICDEVICE_H_
+#define GENERICDEVICE_H_
 
 #include <map>
 #include <string>
-#include "packet_control/PacketHandler.h"
+
+#include "../handler/PacketHandler.h"
 
 #define PI 3.14159265
 
 namespace ROBOTIS
 {
 
-class Dynamixel
+class GenericDevice
 {
 protected:
     const long      MIN_VALUE;
@@ -42,10 +43,10 @@ protected:
     std::map<int, int> addr_length;
 
     char            jointName[40];
-    SerialPort      *comPort;
+    PortHandler     *comPort;
     PacketHandler   *packetHandler;
 
-    Dynamixel(SerialPort *port, long min_value, long max_value, long center_value, double min_radian, double max_radian);
+    GenericDevice(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian);
 
 public:
     int             ID;
@@ -71,15 +72,15 @@ public:
     int             ADDR_PRESENT_LOAD;
     int             ADDR_MOVING;
 
-    virtual ~Dynamixel() { }
+    virtual ~GenericDevice() { }
 
     virtual long rad2Value(double radian)   = 0;
     virtual double value2Rad(long value)    = 0;
 
-    static Dynamixel *getInstance(SerialPort *port, int id, const char *joint_name, int model_number, float protocol_ver = 2.0);
+    static GenericDevice *getInstance(PortHandler *port, int id, const char *joint_name, const char *model, float protocol_ver = 2.0);
 
     char*   getJointName();
-    SerialPort *getSerialPort();
+    PortHandler *getSerialPort();
 
     int     getAddrLength(int addr);
 
@@ -92,4 +93,4 @@ public:
 
 }
 
-#endif /* DYNAMIXEL_H_ */
+#endif /* GENERICDEVICE_H_ */

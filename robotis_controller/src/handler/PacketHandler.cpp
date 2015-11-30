@@ -19,9 +19,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "packet_control/PacketHandler.h"
-#include "packet_control/PacketProtocol1.h"
-#include "packet_control/PacketProtocol2.h"
+#include "../../include/handler/PacketHandler.h"
+
+#include "../../include/handler/PacketProtocol1.h"
+#include "../../include/handler/PacketProtocol2.h"
 
 #define LATENCY_TIME        16 //ms (USB2Dynamixel Default Latency Time)
 
@@ -34,11 +35,11 @@ PacketHandler::PacketHandler()
 PacketHandler *PacketHandler::getPacketHandler(float protocol_ver)
 {
     if(protocol_ver == 1.0)
-        return new PacketProtocol1();
+        return PacketProtocol1::getInstance();
     else if(protocol_ver == 2.0)
-        return new PacketProtocol2();
+        return PacketProtocol2::getInstance();
 
-    return new PacketProtocol2();
+    return PacketProtocol2::getInstance();
 }
 
 

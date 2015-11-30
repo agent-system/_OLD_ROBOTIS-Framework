@@ -22,12 +22,12 @@
 #ifndef _MX28_H_
 #define _MX28_H_
 
-#include "Dynamixel.h"
+#include "GenericDevice.h"
 
 namespace ROBOTIS
 {
 
-class MX28 : public Dynamixel
+class MX28 : public GenericDevice
 {
 public:
 
@@ -35,7 +35,7 @@ public:
     double value2Rad(long value)    { return (double)value * MAX_RADIAN / (double)CENTER_VALUE - MAX_RADIAN; }
 
     ~MX28() { }
-    MX28(SerialPort *port) : Dynamixel(port, 0, 4095, 2048, -PI, PI)
+    MX28(PortHandler *port) : GenericDevice(port, 0, 4095, 2048, -PI, PI)
     {
         ADDR_MODEL_NUMBER                           = P_MODEL_NUMBER;
         ADDR_FIRMWARE_VERSION                       = P_FIRMWARE_VERSION;

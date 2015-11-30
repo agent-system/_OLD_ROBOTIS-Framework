@@ -22,29 +22,35 @@
 #ifndef PACKETPROTOCOL1_H_
 #define PACKETPROTOCOL1_H_
 
-#include "packet_control/PacketHandler.h"
+#include "../handler/PacketHandler.h"
 
 namespace ROBOTIS
 {
 
 class PacketProtocol1 : public PacketHandler
 {
-public:
+private:
+    static PacketProtocol1 *uniqueInstance;
+
     PacketProtocol1();
+
+public:
     virtual ~PacketProtocol1() { };
 
-    virtual int txPacket(SerialPort *port, unsigned char *txpacket);
-    virtual int rxPacket(SerialPort *port, unsigned char *rxpacket);
-    virtual int txRxPacket(SerialPort *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0);
+    static PacketProtocol1* getInstance() { return uniqueInstance; }
 
-    virtual int bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData>& data);
-    virtual int bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData>& data);
+    virtual int txPacket(PortHandler *port, unsigned char *txpacket);
+    virtual int rxPacket(PortHandler *port, unsigned char *rxpacket);
+    virtual int txRxPacket(PortHandler *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0);
 
-    virtual int ping(SerialPort *port, int id, int *error = 0);
+    virtual int bulkReadTxPacket(PortHandler *port, std::vector<BulkReadData>& data);
+    virtual int bulkReadRxPacket(PortHandler *port, std::vector<BulkReadData>& data);
 
-    virtual int read(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0);
-    virtual int write(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0);
-    virtual int syncWrite(SerialPort *port, int start_addr, int data_length, unsigned char* param, int param_length);
+    virtual int ping(PortHandler *port, int id, int *error = 0);
+
+    virtual int read(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0);
+    virtual int write(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0);
+    virtual int syncWrite(PortHandler *port, int start_addr, int data_length, unsigned char* param, int param_length);
 };
 
 }

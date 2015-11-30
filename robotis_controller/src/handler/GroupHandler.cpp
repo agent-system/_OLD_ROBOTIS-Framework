@@ -6,12 +6,12 @@
  */
 
 
-#include "packet_control/GroupHandler.h"
+#include "../../include/handler/GroupHandler.h"
 
 using namespace ROBOTIS;
 
-GroupHandler::GroupHandler(DynamixelController *controller)
-    : dxlController(controller), comPort(0), packetHandler(0)
+GroupHandler::GroupHandler(RobotisController *controller)
+    : robotisController(controller), comPort(0), packetHandler(0)
 { }
 
 bool GroupHandler::pushBulkRead(int id, int start_addr, int length)
@@ -21,7 +21,7 @@ bool GroupHandler::pushBulkRead(int id, int start_addr, int length)
 
     if(length == 0)
     {
-        length = dxlController->getDynamixel(id)->getAddrLength(start_addr);
+        length = robotisController->getDevice(id)->getAddrLength(start_addr);
         if(length < 0)
             return false;
     }
@@ -34,15 +34,15 @@ bool GroupHandler::pushBulkRead(int id, int start_addr, int length)
                 return false;   // already exist.
         }
 
-        if(comPort->getPortName() != dxlController->getDynamixel(id)->getSerialPort()->getPortName())
+        if(comPort->getPortName() != robotisController->getDevice(id)->getSerialPort()->getPortName())
             return false;
-        if(dxlController->getDynamixel(bulkReadData[0].id)->PROTOCOL_VERSION != dxlController->getDynamixel(id)->PROTOCOL_VERSION)
+        if(robotisController->getDevice(bulkReadData[0].id)->PROTOCOL_VERSION != robotisController->getDevice(id)->PROTOCOL_VERSION)
             return false;
     }
     else
     {
-        comPort = dxlController->getDynamixel(id)->getSerialPort();
-        packetHandler = PacketHandler::getPacketHandler(dxlController->getDynamixel(id)->PROTOCOL_VERSION);
+        comPort = robotisController->getDevice(id)->getSerialPort();
+        packetHandler = PacketHandler::getPacketHandler(robotisController->getDevice(id)->PROTOCOL_VERSION);
     }
 
     BulkReadData data;
@@ -59,6 +59,18 @@ bool GroupHandler::pushBulkRead(int id, int start_addr, int length)
     return true;
 }
 
+bool GroupHandler::deleteBulkRead(int id)
+{
+    if(bulkReadData.size() != 0)
+    {
+        for(unsigned int i = 0; i < bulkReadData.size(); i++)
+        {
+            if(bulkReadData[i].id == id)
+                bulkReadData.erase(bulkReadData.begin() + i);
+        }
+    }
+}
+
 bool GroupHandler::changeBulkRead(int id, int start_addr, int length)
 {
     if(start_addr <= 0 || length < 0)
@@ -66,7 +78,7 @@ bool GroupHandler::changeBulkRead(int id, int start_addr, int length)
 
     if(length == 0)
     {
-        length = dxlController->getDynamixel(id)->getAddrLength(start_addr);
+        length = robotisController->getDevice(id)->getAddrLength(start_addr);
         if(length < 0)
             return false;
     }
@@ -125,7 +137,7 @@ bool GroupHandler::getReadData(int id, int addr, long *data, int length)
 
     if(length == 0)
     {
-        length = dxlController->getDynamixel(id)->getAddrLength(addr);
+        length = robotisController->getDevice(id)->getAddrLength(addr);
         if(length < 0)
             return false;
     }
@@ -166,4 +178,11 @@ bool GroupHandler::getReadData(int id, int addr, long *data, int length)
         }
     }
     return false;
+}
+
+int GroupHandler::syncWrite(int start_addr, int data_length, unsigned char* param, int param_length)
+{
+    comPort = robotisController->getDevice(param[0])->getSerialPort();
+    packetHandler = PacketHandler::getPacketHandler(robotisController->getDevice(param[0])->PROTOCOL_VERSION);
+    return packetHandler->syncWrite(comPort, start_addr, data_length, param, param_length);
 }

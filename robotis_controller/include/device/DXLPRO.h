@@ -22,12 +22,12 @@
 #ifndef DXLPRO_H_
 #define DXLPRO_H_
 
-#include "Dynamixel.h"
+#include "GenericDevice.h"
 
 namespace ROBOTIS
 {
 
-class DXLPRO : public Dynamixel
+class DXLPRO : public GenericDevice
 {
 public:
 
@@ -35,8 +35,8 @@ public:
     double value2Rad(long value)    { return (double)value * MAX_RADIAN / (double)MAX_VALUE; }
 
     ~DXLPRO() { }
-    DXLPRO(SerialPort *port, long min_value, long max_value, long center_value, double min_radian, double max_radian)
-        : Dynamixel(port, min_value, max_value, center_value, min_radian, max_radian)
+    DXLPRO(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian)
+        : GenericDevice(port, min_value, max_value, center_value, min_radian, max_radian)
     {
         ADDR_MODEL_NUMBER                               = P_MODEL_NUMBER;
         ADDR_FIRMWARE_VERSION                           = P_FIRMWARE_VERSION;

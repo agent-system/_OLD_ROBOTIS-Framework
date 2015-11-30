@@ -19,10 +19,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#include "../../include/handler/PacketProtocol1.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet_control/PacketProtocol1.h"
 
 ///////////////// for Protocol 1.0 Packet /////////////////
 #define PKT_HEADER0             0
@@ -44,12 +45,14 @@
 
 using namespace ROBOTIS;
 
+PacketProtocol1 *PacketProtocol1::uniqueInstance = new PacketProtocol1();
+
 PacketProtocol1::PacketProtocol1() : PacketHandler()
 {
 
 }
 
-int PacketProtocol1::txPacket(SerialPort *port, unsigned char *txpacket)
+int PacketProtocol1::txPacket(PortHandler *port, unsigned char *txpacket)
 {
     int packet_tx_len, real_tx_len;
     int length;
@@ -88,7 +91,7 @@ int PacketProtocol1::txPacket(SerialPort *port, unsigned char *txpacket)
     return COMM_SUCCESS;
 }
 
-int PacketProtocol1::rxPacket(SerialPort *port, unsigned char *rxpacket)
+int PacketProtocol1::rxPacket(PortHandler *port, unsigned char *rxpacket)
 {
     int rx_length = 0, wait_length = PKT_LENGTH + 2 + 1;  // 2 : ERROR CHKSUM
     int i;
@@ -170,7 +173,7 @@ int PacketProtocol1::rxPacket(SerialPort *port, unsigned char *rxpacket)
     return result;
 }
 
-int PacketProtocol1::txRxPacket(SerialPort *port, unsigned char *txpacket, unsigned char *rxpacket, int *error)
+int PacketProtocol1::txRxPacket(PortHandler *port, unsigned char *txpacket, unsigned char *rxpacket, int *error)
 {
     int result = COMM_TX_FAIL;
 
@@ -209,7 +212,7 @@ int PacketProtocol1::txRxPacket(SerialPort *port, unsigned char *txpacket, unsig
     return result;
 }
 
-int PacketProtocol1::bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData>& data)
+int PacketProtocol1::bulkReadTxPacket(PortHandler *port, std::vector<BulkReadData>& data)
 {
     int result = COMM_TX_FAIL;
 
@@ -248,7 +251,7 @@ int PacketProtocol1::bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData
     return result;
 }
 
-int PacketProtocol1::bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData>& data)
+int PacketProtocol1::bulkReadRxPacket(PortHandler *port, std::vector<BulkReadData>& data)
 {
     int result = COMM_RX_FAIL;
 
@@ -277,7 +280,7 @@ int PacketProtocol1::bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData
     return result;
 }
 
-int PacketProtocol1::ping(SerialPort *port, int id, int *error)
+int PacketProtocol1::ping(PortHandler *port, int id, int *error)
 {
     int result = COMM_TX_FAIL;
 
@@ -291,7 +294,7 @@ int PacketProtocol1::ping(SerialPort *port, int id, int *error)
     return txRxPacket(port, txpacket, rxpacket, error);
 }
 
-int PacketProtocol1::read(SerialPort *port, int id, int address, int length, unsigned char *data, int *error)
+int PacketProtocol1::read(PortHandler *port, int id, int address, int length, unsigned char *data, int *error)
 {
     int result = COMM_TX_FAIL;
     unsigned char txpacket[8]   = {0};
@@ -311,7 +314,7 @@ int PacketProtocol1::read(SerialPort *port, int id, int address, int length, uns
     return result;
 }
 
-int PacketProtocol1::write(SerialPort *port, int id, int address, int length, unsigned char *data, int *error)
+int PacketProtocol1::write(PortHandler *port, int id, int address, int length, unsigned char *data, int *error)
 {
     int result = COMM_TX_FAIL;
     unsigned char* txpacket     = new unsigned char[length+6];
@@ -330,11 +333,11 @@ int PacketProtocol1::write(SerialPort *port, int id, int address, int length, un
     return result;
 }
 
-int PacketProtocol1::syncWrite(SerialPort *port, int start_addr, int data_length, unsigned char* param, int param_length)
+int PacketProtocol1::syncWrite(PortHandler *port, int start_addr, int data_length, unsigned char* param, int param_length)
 {
     int result = COMM_TX_FAIL;
     int pkt_length = param_length + 4;  // 4 : INST / START_ADDR / DATA_LEN / CHKSUM
-    unsigned char* txpacket     = new unsigned char[pkt_length+3];  // 3 : HEADER0 / HEADER1 / ID
+    unsigned char* txpacket     = new unsigned char[pkt_length+4];  // 4 : HEADER0 / HEADER1 / ID / LENGTH
     unsigned char rxpacket[12]  = {0};
 
     if((pkt_length + 3) > 254)
@@ -348,6 +351,7 @@ int PacketProtocol1::syncWrite(SerialPort *port, int start_addr, int data_length
     memcpy(&txpacket[PKT_PARAMETER0+2], param, param_length);
 
     result = txRxPacket(port, txpacket, rxpacket, 0);
+
     free(txpacket);
 
     return result;

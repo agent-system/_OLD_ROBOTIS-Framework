@@ -19,10 +19,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#include "../../include/handler/PacketProtocol2.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "packet_control/PacketProtocol2.h"
 
 ///////////////// for Protocol 2.0 Packet /////////////////
 #define PKT_HEADER0             0
@@ -48,6 +49,8 @@
 #define ERRBIT_ALERT            128     //When the device has a problem, this bit is set to 1. Check "Device Status Check" value.
 
 using namespace ROBOTIS;
+
+PacketProtocol2 *PacketProtocol2::uniqueInstance = new PacketProtocol2();
 
 PacketProtocol2::PacketProtocol2() : PacketHandler()
 {
@@ -159,7 +162,7 @@ void PacketProtocol2::removeStuffing(unsigned char *packet)
     packet[PKT_LENGTH_H] = DXL_HIBYTE(packet_length_out);
 }
 
-int PacketProtocol2::txPacket(SerialPort *port, unsigned char *txpacket)
+int PacketProtocol2::txPacket(PortHandler *port, unsigned char *txpacket)
 {
     int packet_tx_len, real_tx_len;
     int length;
@@ -202,7 +205,7 @@ int PacketProtocol2::txPacket(SerialPort *port, unsigned char *txpacket)
     return COMM_SUCCESS;
 }
 
-int PacketProtocol2::rxPacket(SerialPort *port, unsigned char *rxpacket)
+int PacketProtocol2::rxPacket(PortHandler *port, unsigned char *rxpacket)
 {
     int rx_length = 0, wait_length = PKT_LENGTH_H + 4 + 1;  // 4 : INST ERROR CHKSUM_L CHKSUM_H
     int i;
@@ -285,7 +288,7 @@ int PacketProtocol2::rxPacket(SerialPort *port, unsigned char *rxpacket)
     return result;
 }
 
-int PacketProtocol2::txRxPacket(SerialPort *port, unsigned char *txpacket, unsigned char *rxpacket, int *error)
+int PacketProtocol2::txRxPacket(PortHandler *port, unsigned char *txpacket, unsigned char *rxpacket, int *error)
 {
     int result = COMM_TX_FAIL;
 
@@ -323,7 +326,7 @@ int PacketProtocol2::txRxPacket(SerialPort *port, unsigned char *txpacket, unsig
     return result;
 }
 
-int PacketProtocol2::bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData>& data)
+int PacketProtocol2::bulkReadTxPacket(PortHandler *port, std::vector<BulkReadData>& data)
 {
 	int result = COMM_TX_FAIL;
 
@@ -360,7 +363,7 @@ int PacketProtocol2::bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData
 	return result;
 }
 
-int PacketProtocol2::bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData>& data)
+int PacketProtocol2::bulkReadRxPacket(PortHandler *port, std::vector<BulkReadData>& data)
 {
 	int result = COMM_RX_FAIL;
 
@@ -371,8 +374,11 @@ int PacketProtocol2::bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData
 	{
 		result = rxPacket(port, rxpacket);
 
-		if(result == COMM_SUCCESS)
+        if(result == COMM_SUCCESS)
+        {
+            data[n].commResult = result;
 			data[n].error = rxpacket[PKT_ERROR];
+        }
 		else
 		{
 			printf("[ID:%d] bulkread result : %d \n", data[n].id, result);
@@ -386,10 +392,10 @@ int PacketProtocol2::bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData
 	return result;
 }
 
-int PacketProtocol2::ping(SerialPort *port, int id, int *error)
+int PacketProtocol2::ping(PortHandler *port, int id, int *error)
 { return ping(port, id, 0, 0, error); }
 
-int PacketProtocol2::ping(SerialPort *port, int id, int *model_num, int *firm_ver, int *error)
+int PacketProtocol2::ping(PortHandler *port, int id, int *model_num, int *firm_ver, int *error)
 {
     int result = COMM_TX_FAIL;
     unsigned char txpacket[10]  = {0};
@@ -415,7 +421,7 @@ int PacketProtocol2::ping(SerialPort *port, int id, int *model_num, int *firm_ve
     return result;
 }
 
-int PacketProtocol2::read(SerialPort *port, int id, int address, int length, unsigned char *data, int *error)
+int PacketProtocol2::read(PortHandler *port, int id, int address, int length, unsigned char *data, int *error)
 {
     int result = COMM_TX_FAIL;
     unsigned char txpacket[14]  = {0};
@@ -438,7 +444,7 @@ int PacketProtocol2::read(SerialPort *port, int id, int address, int length, uns
     return result;
 }
 
-int PacketProtocol2::write(SerialPort *port, int id, int address, int length, unsigned char *data, int *error)
+int PacketProtocol2::write(PortHandler *port, int id, int address, int length, unsigned char *data, int *error)
 {
     int result = COMM_TX_FAIL;
     unsigned char* txpacket     = new unsigned char[length + 12];
@@ -459,7 +465,7 @@ int PacketProtocol2::write(SerialPort *port, int id, int address, int length, un
     return result;
 }
 
-int PacketProtocol2::syncWrite(SerialPort *port, int start_addr, int data_length, unsigned char* param, int param_length)
+int PacketProtocol2::syncWrite(PortHandler *port, int start_addr, int data_length, unsigned char* param, int param_length)
 {
     int result = COMM_TX_FAIL;
     int pkt_length = param_length + 7;  // 7 : INST START_ADDR_L START_ADDR_H DATA_LEN_L DATA_LEN_H CHKSUM_L CHKSUM_H

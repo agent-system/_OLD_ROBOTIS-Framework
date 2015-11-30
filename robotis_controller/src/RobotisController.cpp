@@ -1,6 +1,6 @@
 /*
  *=====================================================
- * File   :  DynamixelController.cpp
+ * File   :  RobotisController.cpp
  * Author :  zerom <zerom@robotis.com>
  * Copyright (C) ROBOTIS, 2015
  *=====================================================
@@ -20,31 +20,33 @@
  */
 
 #include <ros/ros.h>
-#include "DynamixelController.h"
+
+#include "../include/RobotisController.h"
 
 using namespace ROBOTIS;
 
-DynamixelController::DynamixelController()
+RobotisController::RobotisController()
 {
     packetHandlerList.push_back(PacketHandler::getPacketHandler(1.0));
     packetHandlerList.push_back(PacketHandler::getPacketHandler(2.0));
 }
 
-DynamixelController::~DynamixelController()
+RobotisController::~RobotisController()
 {
 
 }
 
-bool DynamixelController::initialize()
+bool RobotisController::initialize()
 {
     ros::NodeHandle nh("~");
 
     bool result = false;
     int port_num;
-    nh.getParam("port_num", port_num);
+    if(nh.getParam("port_num", port_num) == false)
+        return result;
 
     if(port_num < 1)
-        return false;
+        return result;
 
     for(int i = 0; i < port_num; i++)
     {
@@ -71,44 +73,54 @@ bool DynamixelController::initialize()
         {
             for(int c = 0; c < dxl_num; c++)
             {
-                int id = 0, model_num = 0;
+                int id = 0;
                 double prot_ver = 2.0;
+                std::string model = "";
                 std::string joint_name = "";
 
                 std::stringstream dxl_idx;
                 dxl_idx << c;
                 nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/id", id);
-                nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/model_num", model_num);
+                nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/model", model);
                 nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/protocol", prot_ver);
                 nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/joint_name", joint_name);
 
-                addDynamixel(portList.back(), id, joint_name.c_str(), model_num, (float)prot_ver);
-                ROS_INFO("  -Dynamixel added (total:%3d) - [ID:%03d] %s", ++cnt, id, joint_name.c_str());
+                addDevice(portList.back(), id, joint_name.c_str(), model.c_str(), (float)prot_ver);
+                ROS_INFO("  -Device added (total:%3d) - [ID:%03d] %s", ++cnt, id, joint_name.c_str());
             }
         }
     }
+    return result;
 }
 
-bool DynamixelController::addSerialPort(const char* port_name, int baudrate)
+bool RobotisController::addSerialPort(const char* port_name, int baudrate)
 {
-    portList.push_back(new SerialPort(port_name));
-    portList.back()->openPort();
-    portList.back()->changeBaudRate(baudrate);
+    portList.push_back(new PortHandler(port_name));
+    if(portList.back()->openPort() == false)
+    {
+        portList.pop_back();
+        return false;
+    }
+    if(portList.back()->changeBaudRate(baudrate) == false)
+    {
+        portList.pop_back();
+        return false;
+    }
     return true;
 }
 
-void DynamixelController::addDynamixel(SerialPort* port, int id, const char* joint_name, int model_number, float protocol_ver)
+void RobotisController::addDevice(PortHandler* port, int id, const char* joint_name, const char* model, float protocol_ver)
 {
     idList.push_back(id);
-    dxlList[id] = Dynamixel::getInstance(port, id, joint_name, model_number, protocol_ver);
+    dxlList[id] = GenericDevice::getInstance(port, id, joint_name, model, protocol_ver);
 }
 
-Dynamixel *DynamixelController::getDynamixel(int id)
+GenericDevice *RobotisController::getDevice(int id)
 {
     return dxlList[id];
 }
 
-int DynamixelController::read(int id, int address, long *data, int *error)
+int RobotisController::read(int id, int address, long *data, int *error)
 {
     if(std::find(idList.begin(), idList.end(), id) == idList.end() || dxlList[id] == NULL) // id is not exist.
         return COMM_TX_ERROR;
@@ -116,7 +128,7 @@ int DynamixelController::read(int id, int address, long *data, int *error)
     return dxlList[id]->read(address, data, error);
 }
 
-int DynamixelController::read(int id, int address, long *data, LENGTH_TYPE length, int *error)
+int RobotisController::read(int id, int address, long *data, LENGTH_TYPE length, int *error)
 {
     if(std::find(idList.begin(), idList.end(), id) == idList.end() || dxlList[id] == NULL) // id is not exist.
         return COMM_TX_ERROR;
@@ -124,7 +136,7 @@ int DynamixelController::read(int id, int address, long *data, LENGTH_TYPE lengt
     return dxlList[id]->read(address, data, length, error);
 }
 
-int DynamixelController::write(int id, int address, long data, int *error)
+int RobotisController::write(int id, int address, long data, int *error)
 {
     if(std::find(idList.begin(), idList.end(), id) == idList.end() || dxlList[id] == NULL) // id is not exist.
         return COMM_TX_ERROR;
@@ -132,7 +144,7 @@ int DynamixelController::write(int id, int address, long data, int *error)
     return dxlList[id]->write(address, data, error);
 }
 
-int DynamixelController::write(int id, int address, long data, LENGTH_TYPE length, int *error)
+int RobotisController::write(int id, int address, long data, LENGTH_TYPE length, int *error)
 {
     if(id == BROADCAST_ID)
     {
@@ -175,17 +187,17 @@ int DynamixelController::write(int id, int address, long data, LENGTH_TYPE lengt
     }
 }
 
-int DynamixelController::getTorqueEnable(int id, int *enable)
+int RobotisController::getTorqueEnable(int id, int *enable)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_TORQUE_ENABLE, (long*)enable);
 }
 
-int DynamixelController::setTorqueEnable(int id, int enable)
+int RobotisController::setTorqueEnable(int id, int enable)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_TORQUE_ENABLE, enable);
 }
 
-int DynamixelController::getPresentPositionRadian(int id, double *radian)
+int RobotisController::getPresentPositionRadian(int id, double *radian)
 {
     long position = 0;
     int result = dxlList[id]->read(dxlList[id]->ADDR_PRESENT_POSITION, &position);
@@ -198,22 +210,22 @@ int DynamixelController::getPresentPositionRadian(int id, double *radian)
     return result;
 }
 
-int DynamixelController::getPresentPositionValue(int id, long *position)
+int RobotisController::getPresentPositionValue(int id, long *position)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_PRESENT_POSITION, position);;
 }
 
-int DynamixelController::getPresentVelocity(int id, long *velocity)
+int RobotisController::getPresentVelocity(int id, long *velocity)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_PRESENT_VELOCITY, velocity);;
 }
 
-int DynamixelController::getPresentLoad(int id, long *load)
+int RobotisController::getPresentLoad(int id, long *load)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_PRESENT_LOAD, load);;
 }
 
-int DynamixelController::getGoalPositionRadian(int id, double *radian)
+int RobotisController::getGoalPositionRadian(int id, double *radian)
 {
     long position = 0;
     int result = dxlList[id]->read(dxlList[id]->ADDR_GOAL_POSITION, &position);
@@ -226,74 +238,74 @@ int DynamixelController::getGoalPositionRadian(int id, double *radian)
     return result;
 }
 
-int DynamixelController::setGoalPositionRadian(int id, double radian)
+int RobotisController::setGoalPositionRadian(int id, double radian)
 {
     long position = dxlList[id]->rad2Value(radian);
 
     return dxlList[id]->write(dxlList[id]->ADDR_GOAL_POSITION, position);
 }
 
-int DynamixelController::getGoalPositionValue(int id, long *position)
+int RobotisController::getGoalPositionValue(int id, long *position)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_GOAL_POSITION, position);;
 }
 
-int DynamixelController::setGoalPositionValue(int id, long position)
+int RobotisController::setGoalPositionValue(int id, long position)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_GOAL_POSITION, position);
 }
 
-int DynamixelController::getGoalVelocity(int id, long *velocity)
+int RobotisController::getGoalVelocity(int id, long *velocity)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_GOAL_VELOCITY, velocity);;
 }
 
-int DynamixelController::setGoalVelocity(int id, long velocity)
+int RobotisController::setGoalVelocity(int id, long velocity)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_GOAL_VELOCITY, velocity);
 }
 
-int DynamixelController::getGoalTorque(int id, long *torque)
+int RobotisController::getGoalTorque(int id, long *torque)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_GOAL_TORQUE, torque);;
 }
 
-int DynamixelController::setGoalTorque(int id, long torque)
+int RobotisController::setGoalTorque(int id, long torque)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_GOAL_TORQUE, torque);
 }
 
-int DynamixelController::getPositionPGain(int id, int *pgain)
+int RobotisController::getPositionPGain(int id, int *pgain)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_POSITION_P_GAIN, (long*)pgain);
 }
 
-int DynamixelController::setPositionPGain(int id, int pgain)
+int RobotisController::setPositionPGain(int id, int pgain)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_POSITION_P_GAIN, pgain);
 }
 
-int DynamixelController::getPositionIGain(int id, int *igain)
+int RobotisController::getPositionIGain(int id, int *igain)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_POSITION_I_GAIN, (long*)igain);
 }
 
-int DynamixelController::setPositionIGain(int id, int igain)
+int RobotisController::setPositionIGain(int id, int igain)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_POSITION_I_GAIN, igain);
 }
 
-int DynamixelController::getPositionDGain(int id, int *dgain)
+int RobotisController::getPositionDGain(int id, int *dgain)
 {
     return dxlList[id]->read(dxlList[id]->ADDR_POSITION_D_GAIN, (long*)dgain);
 }
 
-int DynamixelController::setPositionDGain(int id, int dgain)
+int RobotisController::setPositionDGain(int id, int dgain)
 {
     return dxlList[id]->write(dxlList[id]->ADDR_POSITION_D_GAIN, dgain);
 }
 
-int DynamixelController::isMoving(int id, bool *ismoving)
+int RobotisController::isMoving(int id, bool *ismoving)
 {
     long _moving;
     int result = dxlList[id]->read(dxlList[id]->ADDR_MOVING, &_moving);

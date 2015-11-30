@@ -22,7 +22,7 @@
 #ifndef PACKETPROTOCOL2_H_
 #define PACKETPROTOCOL2_H_
 
-#include "packet_control/PacketHandler.h"
+#include "../handler/PacketHandler.h"
 
 namespace ROBOTIS
 {
@@ -30,27 +30,31 @@ namespace ROBOTIS
 class PacketProtocol2 : public PacketHandler
 {
 private:
+    static PacketProtocol2 *uniqueInstance;
+
+    PacketProtocol2();
     unsigned short updateCRC(unsigned short crc_accum, unsigned char *data_blk_ptr, unsigned short data_blk_size);
     void addStuffing(unsigned char *packet);
     void removeStuffing(unsigned char *packet);
 
 public:
-    PacketProtocol2();
     virtual ~PacketProtocol2() { };
 
-    virtual int txPacket(SerialPort *port, unsigned char *txpacket);
-    virtual int rxPacket(SerialPort *port, unsigned char *rxpacket);
-    virtual int txRxPacket(SerialPort *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0);
+    static PacketProtocol2* getInstance() { return uniqueInstance; }
 
-    virtual int bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData>& data);
-    virtual int bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData>& data);
+    virtual int txPacket(PortHandler *port, unsigned char *txpacket);
+    virtual int rxPacket(PortHandler *port, unsigned char *rxpacket);
+    virtual int txRxPacket(PortHandler *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0);
 
-    virtual int ping(SerialPort *port, int id, int *error = 0);
-    int         ping(SerialPort *port, int id, int *model_num = 0, int *firm_ver = 0, int *error = 0);
+    virtual int bulkReadTxPacket(PortHandler *port, std::vector<BulkReadData>& data);
+    virtual int bulkReadRxPacket(PortHandler *port, std::vector<BulkReadData>& data);
 
-    virtual int read(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0);
-    virtual int write(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0);
-    virtual int syncWrite(SerialPort *port, int start_addr, int data_length, unsigned char* param, int param_length);
+    virtual int ping(PortHandler *port, int id, int *error = 0);
+    int         ping(PortHandler *port, int id, int *model_num = 0, int *firm_ver = 0, int *error = 0);
+
+    virtual int read(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0);
+    virtual int write(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0);
+    virtual int syncWrite(PortHandler *port, int start_addr, int data_length, unsigned char* param, int param_length);
 };
 
 }

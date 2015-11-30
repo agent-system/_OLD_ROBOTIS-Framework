@@ -1,6 +1,6 @@
 /*
  *=====================================================
- * File   :  SerialPort.cpp
+ * File   :  PortHandler.cpp
  * Author :  zerom <zerom@robotis.com>
  * Copyright (C) ROBOTIS, 2015
  *=====================================================
@@ -27,49 +27,49 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <linux/serial.h>
-#include "packet_control/SerialPort.h"
+#include "../../include/handler/PortHandler.h"
 
 #define LATENCY_TIME        16 //ms (USB2Dynamixel Default Latency Time)
 
 using namespace ROBOTIS;
 
-SerialPort::SerialPort(const char* port_name)
+PortHandler::PortHandler(const char* port_name)
     : socketFD(-1), portBaudRate(DEFAULT_BAUDRATE), DEBUG_PRINT(false),
       packetStartTime(0.0), packetWaitTime(0.0), byteTransferTime(0.0)
 {
     setPortName(port_name);
 }
 
-SerialPort::~SerialPort() {
+PortHandler::~PortHandler() {
     closePort();
 }
 
-void SerialPort::setPortName(const char* port_name)
+void PortHandler::setPortName(const char* port_name)
 {
     strcpy(portName, port_name);
 }
 
-char* SerialPort::getPortName()
+char* PortHandler::getPortName()
 {
     return portName;
 }
 
-void SerialPort::setBaudRate(int baudrate)
+void PortHandler::setBaudRate(int baudrate)
 {
     portBaudRate = baudrate;
 }
 
-int SerialPort::getBaudRate()
+int PortHandler::getBaudRate()
 {
     return portBaudRate;
 }
 
-bool SerialPort::changeBaudRate(int baudrate)
+bool PortHandler::changeBaudRate(int baudrate)
 {
 //    if(socketFD < 0)
 //    {
 //        if(DEBUG_PRINT == true)
-//            printf("[SerialPort::changeBaudRate] Port is not opened!\n");
+//            printf("[PortHandler::changeBaudRate] Port is not opened!\n");
 //        return false;
 //    }
 
@@ -90,26 +90,26 @@ bool SerialPort::changeBaudRate(int baudrate)
     }
 }
 
-void SerialPort::setPacketTimeout(int packet_len)
+void PortHandler::setPacketTimeout(int packet_len)
 {
     packetStartTime = getCurrentTime();
     packetWaitTime = (byteTransferTime * (double)packet_len) + (2.0 * (double)LATENCY_TIME) + 2.0;
 }
 
-void SerialPort::setPacketTimeout(double msec)
+void PortHandler::setPacketTimeout(double msec)
 {
     packetStartTime = getCurrentTime();
     packetWaitTime = msec;
 }
 
-bool SerialPort::isPacketTimeout()
+bool PortHandler::isPacketTimeout()
 {
     if(getPacketTime() > packetWaitTime)
         return true;
     return false;
 }
 
-double SerialPort::getPacketTime()
+double PortHandler::getPacketTime()
 {
     double time;
 
@@ -120,28 +120,28 @@ double SerialPort::getPacketTime()
     return time;
 }
 
-double SerialPort::getCurrentTime()
+double PortHandler::getCurrentTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return ((double)tv.tv_sec*1000.0 + (double)tv.tv_usec/1000.0);
 }
 
-int SerialPort::getBytesAvailable()
+int PortHandler::getBytesAvailable()
 {
     int bytes_available;
     ioctl(socketFD, FIONREAD, &bytes_available);
     return bytes_available;
 }
 
-bool SerialPort::setBaudDevisor(int speed)
+bool PortHandler::setBaudDevisor(int speed)
 {
     // try to set a custom divisor
     struct serial_struct ss;
     if(ioctl(socketFD, TIOCGSERIAL, &ss) != 0)
     {
         if(DEBUG_PRINT == true)
-            printf("[SerialPort::setBaudDevisor] TIOCGSERIAL failed!\n");
+            printf("[PortHandler::setBaudDevisor] TIOCGSERIAL failed!\n");
         return false;
     }
 
@@ -152,21 +152,21 @@ bool SerialPort::setBaudDevisor(int speed)
     if(closest_speed < speed * 98 / 100 || closest_speed > speed * 102 / 100)
     {
         if(DEBUG_PRINT == true)
-            printf("[SerialPort::setBaudDevisor] Cannot set speed to %d, closest is %d \n", speed, closest_speed);
+            printf("[PortHandler::setBaudDevisor] Cannot set speed to %d, closest is %d \n", speed, closest_speed);
         return false;
     }
 
     if(ioctl(socketFD, TIOCSSERIAL, &ss) < 0)
     {
         if(DEBUG_PRINT == true)
-            printf("[SerialPort::setBaudDevisor] TIOCSSERIAL failed!\n");
+            printf("[PortHandler::setBaudDevisor] TIOCSSERIAL failed!\n");
         return false;
     }
     byteTransferTime = (1000.0 / (double)speed) * 10.0;
     return true;
 }
 
-int SerialPort::getBaud(int baud)
+int PortHandler::getBaud(int baud)
 {
     switch (baud)
     {
@@ -211,7 +211,7 @@ int SerialPort::getBaud(int baud)
     }
 }
 
-bool SerialPort::setupSerialPort(int baud)
+bool PortHandler::setupSerialPort(int baud)
 {
     struct termios newtio;
 
@@ -219,7 +219,7 @@ bool SerialPort::setupSerialPort(int baud)
     if(socketFD < 0)
     {
         if(DEBUG_PRINT == true)
-            printf("[SerialPort::setupSerialPort] Error opening serial port!\n");
+            printf("[PortHandler::setupSerialPort] Error opening serial port!\n");
         return false;
     }
 
@@ -240,29 +240,29 @@ bool SerialPort::setupSerialPort(int baud)
     return true;
 }
 
-bool SerialPort::openPort()
+bool PortHandler::openPort()
 {
     return changeBaudRate(portBaudRate);
 }
 
-void SerialPort::closePort()
+void PortHandler::closePort()
 {
     if(socketFD != -1)
         close(socketFD);
     socketFD = -1;
 }
 
-void SerialPort::clearPort()
+void PortHandler::clearPort()
 {
     tcflush(socketFD, TCIOFLUSH);
 }
 
-int SerialPort::writePort(unsigned char* packet, int packet_len)
+int PortHandler::writePort(unsigned char* packet, int packet_len)
 {
     return write(socketFD, packet, packet_len);
 }
 
-int SerialPort::readPort(unsigned char* packet, int packet_len)
+int PortHandler::readPort(unsigned char* packet, int packet_len)
 {
     return read(socketFD, packet, packet_len);
 }

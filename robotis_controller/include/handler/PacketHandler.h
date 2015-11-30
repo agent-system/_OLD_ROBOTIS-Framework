@@ -23,8 +23,9 @@
 #define PACKETHANDLER_H_
 
 #include <vector>
-#include "packet_control/SerialPort.h"
-#include "packet_control/BulkReadData.h"
+
+#include "../handler/BulkReadData.h"
+#include "PortHandler.h"
 
 #define MAXNUM_TXPACKET     (4*1024)
 #define MAXNUM_RXPACKET     (4*1024)
@@ -85,18 +86,18 @@ public:
     static PacketHandler *getPacketHandler(float protocol_ver = 2.0);
     virtual ~PacketHandler() { };
 
-    virtual int txPacket(SerialPort *port, unsigned char *txpacket) = 0;
-    virtual int rxPacket(SerialPort *port, unsigned char *rxpacket) = 0;
-    virtual int txRxPacket(SerialPort *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0) = 0;
+    virtual int txPacket(PortHandler *port, unsigned char *txpacket) = 0;
+    virtual int rxPacket(PortHandler *port, unsigned char *rxpacket) = 0;
+    virtual int txRxPacket(PortHandler *port, unsigned char *txpacket, unsigned char *rxpacket, int *error = 0) = 0;
 
-    virtual int bulkReadTxPacket(SerialPort *port, std::vector<BulkReadData>& data) = 0;
-    virtual int bulkReadRxPacket(SerialPort *port, std::vector<BulkReadData>& data) = 0;
+    virtual int bulkReadTxPacket(PortHandler *port, std::vector<BulkReadData>& data) = 0;
+    virtual int bulkReadRxPacket(PortHandler *port, std::vector<BulkReadData>& data) = 0;
 
-    virtual int ping(SerialPort *port, int id, int *error = 0) = 0;
+    virtual int ping(PortHandler *port, int id, int *error = 0) = 0;
 
-    virtual int read(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0) = 0;
-    virtual int write(SerialPort *port, int id, int address, int length, unsigned char *data, int *error = 0) = 0;
-    virtual int syncWrite(SerialPort *port, int start_addr, int data_length, unsigned char* param, int param_length) = 0;
+    virtual int read(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0) = 0;
+    virtual int write(PortHandler *port, int id, int address, int length, unsigned char *data, int *error = 0) = 0;
+    virtual int syncWrite(PortHandler *port, int start_addr, int data_length, unsigned char* param, int param_length) = 0;
 };
 
 }

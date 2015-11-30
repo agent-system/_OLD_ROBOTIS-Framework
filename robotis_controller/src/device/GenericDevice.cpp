@@ -20,19 +20,41 @@
  */
 
 #include <string.h>
-#include "dynamixel/MX28.h"
-#include "dynamixel/DXLPRO.h"
-#include "dynamixel/UNKNOWN.h"
-#include "dynamixel/Dynamixel.h"
+
+#include "../../include/device/DXLPRO.h"
+#include "../../include/device/GenericDevice.h"
+#include "../../include/device/MX28.h"
+#include "../../include/device/UNKNOWN.h"
 
 using namespace ROBOTIS;
 
-Dynamixel::Dynamixel(SerialPort *port, long min_value, long max_value, long center_value, double min_radian, double max_radian) :
-    comPort(port),
-    MIN_VALUE(min_value), MAX_VALUE(max_value), CENTER_VALUE(center_value), MIN_RADIAN(min_radian), MAX_RADIAN(max_radian)
-{ }
+GenericDevice::GenericDevice(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian) :
+    comPort(port), packetHandler(PacketHandler::getPacketHandler(2.0)),
+    MIN_VALUE(min_value), MAX_VALUE(max_value), CENTER_VALUE(center_value), MIN_RADIAN(min_radian), MAX_RADIAN(max_radian),
+    ID(0), PROTOCOL_VERSION(2.0)
+{
+    ADDR_MODEL_NUMBER           = -1;
+    ADDR_FIRMWARE_VERSION       = -1;
+    ADDR_ID                     = -1;
+    ADDR_BAUD_RATE              = -1;
+    ADDR_RETURN_DELAY_TIME      = -1;
+    ADDR_RETURN_LEVEL           = -1;
+    ADDR_MIN_POSITION_LIMIT     = -1;
+    ADDR_MAX_POSITION_LIMIT     = -1;
+    ADDR_TORQUE_ENABLE          = -1;
+    ADDR_POSITION_D_GAIN        = -1;
+    ADDR_POSITION_I_GAIN        = -1;
+    ADDR_POSITION_P_GAIN        = -1;
+    ADDR_GOAL_POSITION          = -1;
+    ADDR_GOAL_VELOCITY          = -1;
+    ADDR_GOAL_TORQUE            = -1;
+    ADDR_PRESENT_POSITION       = -1;
+    ADDR_PRESENT_VELOCITY       = -1;
+    ADDR_PRESENT_LOAD           = -1;
+    ADDR_MOVING                 = -1;
+}
 
-int Dynamixel::getAddrLength(int addr)
+int GenericDevice::getAddrLength(int addr)
 {
     std::map<int, int>::iterator iter_addr_length;
     iter_addr_length = addr_length.find(addr);
@@ -42,55 +64,32 @@ int Dynamixel::getAddrLength(int addr)
     return -1;
 }
 
-Dynamixel *Dynamixel::getInstance(SerialPort *port, int id, const char *joint_name, int model_number, float protocol_ver)
+GenericDevice *GenericDevice::getInstance(PortHandler *port, int id, const char *joint_name, const char *model, float protocol_ver)
 {
-    Dynamixel *ret = 0;
-    switch(model_number)
-    {
-    case 29:    // MX-28
+    GenericDevice *ret = 0;
+
+    if(strcmp(model, "MX-28") == 0 || strcmp(model, "MX28") == 0 || strcmp(model, "mx-28") == 0 || strcmp(model, "mx28") == 0)
         ret = new MX28(port);
-        break;
-
-    case 35072: // L42-10-S300-R
+    else if(strcmp(model, "L42-10-S300-R") == 0)
         ret = new DXLPRO(port, -2047, 2048, 0, -PI, PI);
-        break;
-
-    case 38176: // L54-50-S290-R
+    else if(strcmp(model, "L54-50-S290-R") == 0)
         ret = new DXLPRO(port, -103860, 103860, 0, -PI, PI);
-        break;
-
-    case 37928: // L54-30-S400-R
+    else if(strcmp(model, "L54-30-S400-R") == 0)
         ret = new DXLPRO(port, -144198, 144198, 0, -PI, PI);
-        break;
-
-    case 38152: // L54-50-S500-R
-    case 37896: // L54-30-S500-R
+    else if(strcmp(model, "L54-50-S500-R") == 0 || strcmp(model, "L54-30-S500-R") == 0)
         ret = new DXLPRO(port, -180684, 180684, 0, -PI, PI);
-        break;
-
-    case 43288: // M42-10-S260-R
+    else if(strcmp(model, "M42-10-S260-R") == 0)
         ret = new DXLPRO(port, -131584, 131584, 0, -PI, PI);
-        break;
-
-    case 46096: // M54-40-S250-R
-    case 46352: // M54-60-S250-R
+    else if(strcmp(model, "M54-40-S250-R") == 0 || strcmp(model, "M54-60-S250-R") == 0)
         ret = new DXLPRO(port, -125700, 125700, 0, -PI, PI);
-        break;
-
-    case 51200: // H42-20-S300-R
+    else if(strcmp(model, "H42-20-S300-R") == 0)
         ret = new DXLPRO(port, -151900, 151900, 0, -PI, PI);
-        break;
-
-    case 53768: // H54-100-S500-R
-    case 54024: // H54-200-S500-R
-    case 54152: // H54-200-B500-R
+    else if(strcmp(model, "H54-100-S500-R") == 0 || strcmp(model, "H54-200-S500-R") == 0 || strcmp(model, "H54-200-B500-R") == 0)
         ret = new DXLPRO(port, -250950, 250950, 0, -PI, PI);
-        break;
-
-    default:
-    	ret = new UNKNOWN(port);
-        break;
-    }
+    else if(strcmp(model, "GRIPPER") == 0)
+        ret = new DXLPRO(port, -110000, 110000, 0, -PI/4.0, PI/4.0);
+    else
+        ret = new UNKNOWN(port);
 
     if(ret != 0)
     {
@@ -103,17 +102,17 @@ Dynamixel *Dynamixel::getInstance(SerialPort *port, int id, const char *joint_na
     return ret;
 }
 
-char* Dynamixel::getJointName()
+char* GenericDevice::getJointName()
 {
     return jointName;
 }
 
-SerialPort* Dynamixel::getSerialPort()
+PortHandler* GenericDevice::getSerialPort()
 {
     return comPort;
 }
 
-int Dynamixel::read(int address, long *data, int *error)
+int GenericDevice::read(int address, long *data, int *error)
 {
     int data_len = getAddrLength(address);
 
@@ -142,8 +141,11 @@ int Dynamixel::read(int address, long *data, int *error)
     return result;
 }
 
-int Dynamixel::read(int address, long *data, LENGTH_TYPE length, int *error)
+int GenericDevice::read(int address, long *data, LENGTH_TYPE length, int *error)
 {
+    if(address < 0)
+        return COMM_NOT_AVAILABLE;
+
     unsigned char *read_data = new unsigned char[length];
 
     int result = packetHandler->read(comPort, ID, address, length, read_data, error);
@@ -166,7 +168,7 @@ int Dynamixel::read(int address, long *data, LENGTH_TYPE length, int *error)
     return result;
 }
 
-int Dynamixel::write(int address, long data, int *error)
+int GenericDevice::write(int address, long data, int *error)
 {
     int data_len = getAddrLength(address);
 
@@ -197,8 +199,11 @@ int Dynamixel::write(int address, long data, int *error)
     return packetHandler->write(comPort, ID, address, data_len, write_data, error);
 }
 
-int Dynamixel::write(int address, long data, LENGTH_TYPE length, int *error)
+int GenericDevice::write(int address, long data, LENGTH_TYPE length, int *error)
 {
+    if(address < 0)
+        return COMM_NOT_AVAILABLE;
+
     unsigned char *write_data = new unsigned char[length];
 
     switch(length)

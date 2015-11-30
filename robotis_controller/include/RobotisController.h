@@ -1,6 +1,6 @@
 /*
  *=====================================================
- * File   :  DynamixelController.h
+ * File   :  RobotisController.h
  * Author :  zerom <zerom@robotis.com>
  * Copyright (C) ROBOTIS, 2015
  *=====================================================
@@ -19,37 +19,38 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#ifndef DYNAMIXELCONTROLLER_H_
-#define DYNAMIXELCONTROLLER_H_
+#ifndef ROBOTISCONTROLLER_H_
+#define ROBOTISCONTROLLER_H_
 
 
 #include <vector>
-#include "dynamixel/Dynamixel.h"
-#include "packet_control/PacketHandler.h"
+
+#include "device/GenericDevice.h"
+#include "handler/PacketHandler.h"
 
 namespace ROBOTIS
 {
 
 
-class DynamixelController
+class RobotisController
 {
 private:
-    Dynamixel                   *dxlList[MAX_ID+1];
-    std::vector<SerialPort *>   portList;
+    GenericDevice               *dxlList[MAX_ID+1];
+    std::vector<PortHandler *>   portList;
     std::vector<PacketHandler *> packetHandlerList;
 
 public:
     std::vector<int>            idList;
 
-    DynamixelController();
-    virtual ~DynamixelController();
+    RobotisController();
+    virtual ~RobotisController();
 
     bool    initialize();
 
-    bool    addSerialPort(const char* port_name, int baudrate = SerialPort::DEFAULT_BAUDRATE);
-    void    addDynamixel(SerialPort* port, int id, const char* joint_name, int model_number, float protocol_ver = 2.0);
+    bool    addSerialPort(const char* port_name, int baudrate = PortHandler::DEFAULT_BAUDRATE);
+    void    addDevice(PortHandler* port, int id, const char* joint_name, const char* model, float protocol_ver = 2.0);
 
-    Dynamixel *getDynamixel(int id);
+    GenericDevice *getDevice(int id);
 
     int     read(int id, int address, long *data, int *error = 0);
     int     read(int id, int address, long *data, LENGTH_TYPE length, int *error = 0);
@@ -98,4 +99,4 @@ public:
 
 
 
-#endif /* DYNAMIXELCONTROLLER_H_ */
+#endif /* ROBOTISCONTROLLER_H_ */

@@ -5,16 +5,16 @@
  *      Author: zerom
  */
 
-#ifndef ROBOTIS_FRAMEWORK_DYNAMIXEL_CONTROLLER_INCLUDE_DYNAMIXEL_UNKNOWN_H_
-#define ROBOTIS_FRAMEWORK_DYNAMIXEL_CONTROLLER_INCLUDE_DYNAMIXEL_UNKNOWN_H_
+#ifndef UNKNOWN_H_
+#define UNKNOWN_H_
 
 
-#include "Dynamixel.h"
+#include "GenericDevice.h"
 
 namespace ROBOTIS
 {
 
-class UNKNOWN : public Dynamixel
+class UNKNOWN : public GenericDevice
 {
 public:
 
@@ -22,7 +22,7 @@ public:
     double value2Rad(long value)    { return 0; }
 
     ~UNKNOWN() { }
-    UNKNOWN(SerialPort *port) : Dynamixel(port, 0, 4095, 2048, -PI, PI)
+    UNKNOWN(PortHandler *port) : GenericDevice(port, 0, 4095, 2048, -PI, PI)
     {
         ADDR_MODEL_NUMBER                           = P_MODEL_NUMBER;
         ADDR_FIRMWARE_VERSION                       = P_FIRMWARE_VERSION;
@@ -54,4 +54,4 @@ public:
 }
 
 
-#endif /* ROBOTIS_FRAMEWORK_DYNAMIXEL_CONTROLLER_INCLUDE_DYNAMIXEL_UNKNOWN_H_ */
+#endif /* UNKNOWN_H_ */
