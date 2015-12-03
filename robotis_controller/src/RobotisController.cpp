@@ -43,7 +43,10 @@ bool RobotisController::initialize()
     bool result = false;
     int port_num;
     if(nh.getParam("port_num", port_num) == false)
+    {
+        ROS_INFO("  Parameter does not exist.");
         return result;
+    }
 
     if(port_num < 1)
         return result;
@@ -98,6 +101,7 @@ bool RobotisController::addSerialPort(const char* port_name, int baudrate)
     portList.push_back(new PortHandler(port_name));
     if(portList.back()->openPort() == false)
     {
+        ROS_INFO("  Port open error!");
         portList.pop_back();
         return false;
     }

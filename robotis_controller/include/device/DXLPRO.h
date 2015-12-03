@@ -31,8 +31,50 @@ class DXLPRO : public GenericDevice
 {
 public:
 
-    long rad2Value(double radian)   { return radian * MAX_VALUE / MAX_RADIAN; }
-    double value2Rad(long value)    { return (double)value * MAX_RADIAN / (double)MAX_VALUE; }
+    long rad2Value(double radian)   {
+        long value = 0;
+        if(radian > 0) {
+            if(MAX_VALUE <= 0)
+                return MAX_VALUE;
+            value = radian * MAX_VALUE / MAX_RADIAN;
+        }
+        else if(radian < 0) {
+            if(MIN_VALUE >= 0)
+                return MIN_VALUE;
+            value = radian * MIN_VALUE / MIN_RADIAN;
+        }
+        else
+            value = CENTER_VALUE;
+
+        if(value > MAX_VALUE)
+            return MAX_VALUE;
+        else if(value < MIN_VALUE)
+            return MIN_VALUE;
+
+        return value;
+    }
+    double value2Rad(long value)    {
+        double rad = 0.0;
+        if(value > CENTER_VALUE) {
+            if(MAX_RADIAN <= 0)
+                return MAX_RADIAN;
+            rad = (double)value * MAX_RADIAN / (double)MAX_VALUE;
+        }
+        else if(value < CENTER_VALUE) {
+            if(MIN_RADIAN >= 0)
+                return MIN_RADIAN;
+            rad = (double)value * MIN_RADIAN / (double)MIN_VALUE;
+        }
+        else
+            rad = 0;
+
+        if(rad > MAX_RADIAN)
+            return MAX_RADIAN;
+        else if(rad < MIN_RADIAN)
+            return MIN_RADIAN;
+
+        return rad;
+    }
 
     ~DXLPRO() { }
     DXLPRO(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian)

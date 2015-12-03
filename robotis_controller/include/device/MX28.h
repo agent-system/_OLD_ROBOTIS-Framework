@@ -31,8 +31,48 @@ class MX28 : public GenericDevice
 {
 public:
 
-    long rad2Value(double radian)   { return radian * CENTER_VALUE / MAX_RADIAN + CENTER_VALUE; }
-    double value2Rad(long value)    { return (double)value * MAX_RADIAN / (double)CENTER_VALUE - MAX_RADIAN; }
+    long rad2Value(double radian)   {
+        long value;
+        if(radian > 0) {
+            if(MAX_VALUE <= CENTER_VALUE)
+                return MAX_VALUE;
+            value = radian * (MAX_VALUE - CENTER_VALUE) / MAX_RADIAN + CENTER_VALUE;
+        }
+        else if(radian < 0) {
+            if(MIN_VALUE >= CENTER_VALUE)
+                return MIN_VALUE;
+            value = radian * (MIN_VALUE - CENTER_VALUE) / MIN_RADIAN + CENTER_VALUE;
+        }
+        else
+            value = CENTER_VALUE;
+
+        if(value > MAX_VALUE)
+            return MAX_VALUE;
+        else if(value < MIN_VALUE)
+            return MIN_VALUE;
+
+        return value;
+    }
+    double value2Rad(long value)    {
+        double rad = 0.0;
+        if(value > CENTER_VALUE) {
+            if(MAX_RADIAN <= 0)
+                return MAX_RADIAN;
+            rad = (double)(value - CENTER_VALUE) * MAX_RADIAN / (double)(MAX_VALUE - CENTER_VALUE);
+        }
+        else if(value < CENTER_VALUE) {
+            if(MIN_RADIAN >= 0)
+                return MIN_RADIAN;
+            rad = (double)(value - CENTER_VALUE) * MIN_RADIAN / (double)(MIN_VALUE - CENTER_VALUE);
+        }
+
+        if(rad > MAX_RADIAN)
+            return MAX_RADIAN;
+        else if(rad < MIN_RADIAN)
+            return MIN_RADIAN;
+
+        return rad;
+    }
 
     ~MX28() { }
     MX28(PortHandler *port) : GenericDevice(port, 0, 4095, 2048, -PI, PI)
