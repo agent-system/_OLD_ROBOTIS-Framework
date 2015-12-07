@@ -34,17 +34,17 @@ public:
     long rad2Value(double radian)   {
         long value;
         if(radian > 0) {
-            if(MAX_VALUE <= CENTER_VALUE)
+            if(MAX_VALUE <= RAD_0_POSITION_VALUE)
                 return MAX_VALUE;
-            value = radian * (MAX_VALUE - CENTER_VALUE) / MAX_RADIAN + CENTER_VALUE;
+            value = radian * (MAX_VALUE - RAD_0_POSITION_VALUE) / MAX_RADIAN + RAD_0_POSITION_VALUE;
         }
         else if(radian < 0) {
-            if(MIN_VALUE >= CENTER_VALUE)
+            if(MIN_VALUE >= RAD_0_POSITION_VALUE)
                 return MIN_VALUE;
-            value = radian * (MIN_VALUE - CENTER_VALUE) / MIN_RADIAN + CENTER_VALUE;
+            value = radian * (MIN_VALUE - RAD_0_POSITION_VALUE) / MIN_RADIAN + RAD_0_POSITION_VALUE;
         }
         else
-            value = CENTER_VALUE;
+            value = RAD_0_POSITION_VALUE;
 
         if(value > MAX_VALUE)
             return MAX_VALUE;
@@ -55,15 +55,15 @@ public:
     }
     double value2Rad(long value)    {
         double rad = 0.0;
-        if(value > CENTER_VALUE) {
+        if(value > RAD_0_POSITION_VALUE) {
             if(MAX_RADIAN <= 0)
                 return MAX_RADIAN;
-            rad = (double)(value - CENTER_VALUE) * MAX_RADIAN / (double)(MAX_VALUE - CENTER_VALUE);
+            rad = (double)(value - RAD_0_POSITION_VALUE) * MAX_RADIAN / (double)(MAX_VALUE - RAD_0_POSITION_VALUE);
         }
-        else if(value < CENTER_VALUE) {
+        else if(value < RAD_0_POSITION_VALUE) {
             if(MIN_RADIAN >= 0)
                 return MIN_RADIAN;
-            rad = (double)(value - CENTER_VALUE) * MIN_RADIAN / (double)(MIN_VALUE - CENTER_VALUE);
+            rad = (double)(value - RAD_0_POSITION_VALUE) * MIN_RADIAN / (double)(MIN_VALUE - RAD_0_POSITION_VALUE);
         }
 
         if(rad > MAX_RADIAN)

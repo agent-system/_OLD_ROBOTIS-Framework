@@ -44,7 +44,7 @@ public:
             value = radian * MIN_VALUE / MIN_RADIAN;
         }
         else
-            value = CENTER_VALUE;
+            value = RAD_0_POSITION_VALUE;
 
         if(value > MAX_VALUE)
             return MAX_VALUE;
@@ -55,12 +55,12 @@ public:
     }
     double value2Rad(long value)    {
         double rad = 0.0;
-        if(value > CENTER_VALUE) {
+        if(value > RAD_0_POSITION_VALUE) {
             if(MAX_RADIAN <= 0)
                 return MAX_RADIAN;
             rad = (double)value * MAX_RADIAN / (double)MAX_VALUE;
         }
-        else if(value < CENTER_VALUE) {
+        else if(value < RAD_0_POSITION_VALUE) {
             if(MIN_RADIAN >= 0)
                 return MIN_RADIAN;
             rad = (double)value * MIN_RADIAN / (double)MIN_VALUE;
@@ -77,8 +77,8 @@ public:
     }
 
     ~DXLPRO() { }
-    DXLPRO(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian)
-        : GenericDevice(port, min_value, max_value, center_value, min_radian, max_radian)
+    DXLPRO(PortHandler *port, long min_value, long max_value, long rad_0_position_value, double min_radian, double max_radian)
+        : GenericDevice(port, min_value, max_value, rad_0_position_value, min_radian, max_radian)
     {
         ADDR_MODEL_NUMBER                               = P_MODEL_NUMBER;
         ADDR_FIRMWARE_VERSION                           = P_FIRMWARE_VERSION;

@@ -5,18 +5,19 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   std_msgs
-  message_generation
+  robotis_controller_msgs
+#  message_generation
 )
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  ControlWrite.msg
-  ControlTorque.msg
-  PublishPosition.msg
-#   Message1.msg
-#   Message2.msg
-)
+# add_message_files(
+#   FILES
+#   ControlWrite.msg
+#   ControlTorque.msg
+#   PublishPosition.msg
+#    Message1.msg
+#    Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -33,10 +34,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
+# generate_messages(
+#   DEPENDENCIES
 #   dynamixel_msgs#   sensor_msgs#   std_msgs
-)
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -50,7 +51,6 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES robotis_controller
-#  CATKIN_DEPENDS roscpp sensor_msgs std_msgs
   CATKIN_DEPENDS roscpp sensor_msgs std_msgs
 #  DEPENDS system_lib
 )

@@ -13,9 +13,9 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/JointState.h>
 
-#include "robotis_controller/ControlWrite.h"
-#include "robotis_controller/ControlTorque.h"
-#include "robotis_controller/PublishPosition.h"
+#include "robotis_controller_msgs/ControlWrite.h"
+#include "robotis_controller_msgs/ControlTorque.h"
+#include "robotis_controller_msgs/PublishPosition.h"
 
 #include "../../robotis_controller/include/handler/GroupHandler.h"
 #include "../../robotis_controller/include/RobotisController.h"
@@ -30,35 +30,39 @@ int                 syncwrite_addr;
 int                 syncwrite_data_length;
 std::vector <unsigned char> syncwrite_param;
 
-std::vector <int>           publish_list;
+std::vector <int>   publish_list;
 
-int get_id_from_name(const char* name)
+int get_id_from_name(std::string name)
 {
     int id = -1;
+
+    if("_ALL_" == name)
+        return 254;
+
     for(int i = 0; i < controller->idList.size(); i++)
     {
         id = controller->idList[i];
-        if(strcmp(controller->getDevice(id)->getJointName(), name) == 0)
+        if(controller->getDevice(id)->getJointName() == name)
             return id;
     }
     return -1;
 }
 
-void publish_position_callback(const robotis_controller::PublishPosition::ConstPtr& msg)
+void publish_position_callback(const robotis_controller_msgs::PublishPosition::ConstPtr& msg)
 {
     if(msg->name.size() == 0 || msg->name.size() != msg->publish.size())
         return;
 
     for(int i = 0; i < msg->name.size(); i++)
     {
-        int id = get_id_from_name(msg->name[i].c_str());
+        int id = get_id_from_name(msg->name[i]);
         if(id == -1)
             continue;
 
         if(msg->publish[i] == true) {
             grp_handler.pushBulkRead(id, controller->getDevice(id)->ADDR_PRESENT_POSITION);
             if ( std::find(publish_list.begin(), publish_list.end(), id) == publish_list.end() )
-                publish_list.push_back(get_id_from_name(msg->name[i].c_str()));
+                publish_list.push_back(get_id_from_name(msg->name[i]));
         }
         else {
             grp_handler.deleteBulkRead(id);
@@ -71,6 +75,7 @@ void publish_position_callback(const robotis_controller::PublishPosition::ConstP
 
 void joint_states_callback(const sensor_msgs::JointState::ConstPtr& msg)
 {
+    static int old_sec;
     int n = 0, id = -1;
 
     if(msg->name.size() == 0 || msg->name.size() != msg->position.size())
@@ -80,7 +85,7 @@ void joint_states_callback(const sensor_msgs::JointState::ConstPtr& msg)
     syncwrite_param.clear();
     for(unsigned int idx = 0; idx < msg->name.size(); idx++)
     {
-        id = get_id_from_name(msg->name[idx].c_str());
+        id = get_id_from_name(msg->name[idx]);
         if(id != -1)
         {
             syncwrite_addr = controller->getDevice(id)->ADDR_GOAL_POSITION;
@@ -105,25 +110,25 @@ void joint_states_callback(const sensor_msgs::JointState::ConstPtr& msg)
     pthread_mutex_unlock(&mutex);
 }
 
-void control_write_callback(const robotis_controller::ControlWrite::ConstPtr& msg)
+void control_write_callback(const robotis_controller_msgs::ControlWrite::ConstPtr& msg)
 {
     switch(msg->length)
     {
     case 1:
-        controller->write(msg->id, msg->addr, msg->value, LENGTH_1BYTE, 0);
+        controller->write(get_id_from_name(msg->name), msg->addr, msg->value, LENGTH_1BYTE, 0);
         break;
     case 2:
-        controller->write(msg->id, msg->addr, msg->value, LENGTH_2BYTE, 0);
+        controller->write(get_id_from_name(msg->name), msg->addr, msg->value, LENGTH_2BYTE, 0);
         break;
     case 4:
-        controller->write(msg->id, msg->addr, msg->value, LENGTH_4BYTE, 0);
+        controller->write(get_id_from_name(msg->name), msg->addr, msg->value, LENGTH_4BYTE, 0);
         break;
     default:
         break;
     }
 }
 
-void control_torque_callback(const robotis_controller::ControlTorque::ConstPtr& msg)
+void control_torque_callback(const robotis_controller_msgs::ControlTorque::ConstPtr& msg)
 {
     int n = 0, id = -1;
 
@@ -134,7 +139,7 @@ void control_torque_callback(const robotis_controller::ControlTorque::ConstPtr& 
     syncwrite_param.clear();
     for(int i = 0; i < msg->name.size(); i++)
     {
-        id = get_id_from_name(msg->name[i].c_str());
+        id = get_id_from_name(msg->name[i]);
         if(id != -1)
         {
             syncwrite_addr = controller->getDevice(id)->ADDR_TORQUE_ENABLE;
@@ -162,6 +167,18 @@ void *comm_thread_proc(void *param)
         joint_states_pub = nh.advertise<sensor_msgs::JointState>("/robot_joint_states", 1);
 
     ros::Publisher manager_ready_pub = nh.advertise<std_msgs::Bool>("/manager_ready", 10, true);
+
+    int publish_rate = 125;
+    if(nh.getParam("joint_state_publish_rate", publish_rate) == true)
+    {
+        if(publish_rate <= 0 || publish_rate > 125)
+            publish_rate = 125;
+    }
+    else
+    {
+        publish_rate = 125;
+    }
+    ros::Rate control_rate(publish_rate);
 
     // check .launch file parameter
     if(controller->initialize() == false)
@@ -205,6 +222,7 @@ void *comm_thread_proc(void *param)
         }
 
         ros::spinOnce();
+        control_rate.sleep();
     }
     return 0;
 }

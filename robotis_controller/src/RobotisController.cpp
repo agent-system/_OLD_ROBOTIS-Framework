@@ -88,7 +88,7 @@ bool RobotisController::initialize()
                 nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/protocol", prot_ver);
                 nh.getParam("serial_ports/dxl_tty"+dev_idx.str()+"/dxl"+dxl_idx.str()+"/joint_name", joint_name);
 
-                addDevice(portList.back(), id, joint_name.c_str(), model.c_str(), (float)prot_ver);
+                addDevice(portList.back(), id, joint_name, model, (float)prot_ver);
                 ROS_INFO("  -Device added (total:%3d) - [ID:%03d] %s", ++cnt, id, joint_name.c_str());
             }
         }
@@ -113,7 +113,7 @@ bool RobotisController::addSerialPort(const char* port_name, int baudrate)
     return true;
 }
 
-void RobotisController::addDevice(PortHandler* port, int id, const char* joint_name, const char* model, float protocol_ver)
+void RobotisController::addDevice(PortHandler* port, int id, std::string joint_name, std::string model, float protocol_ver)
 {
     idList.push_back(id);
     dxlList[id] = GenericDevice::getInstance(port, id, joint_name, model, protocol_ver);

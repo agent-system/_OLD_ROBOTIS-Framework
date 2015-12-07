@@ -48,7 +48,7 @@ public:
     bool    initialize();
 
     bool    addSerialPort(const char* port_name, int baudrate = PortHandler::DEFAULT_BAUDRATE);
-    void    addDevice(PortHandler* port, int id, const char* joint_name, const char* model, float protocol_ver = 2.0);
+    void    addDevice(PortHandler* port, int id, std::string joint_name, std::string model, float protocol_ver = 2.0);
 
     GenericDevice *getDevice(int id);
 

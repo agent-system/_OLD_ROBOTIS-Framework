@@ -37,16 +37,16 @@ class GenericDevice
 protected:
     const long      MIN_VALUE;
     const long      MAX_VALUE;
-    const long      CENTER_VALUE;
+    const long      RAD_0_POSITION_VALUE;
     const double    MIN_RADIAN;
     const double    MAX_RADIAN;
     std::map<int, int> addr_length;
 
-    char            jointName[40];
+    std::string     jointName;
     PortHandler     *comPort;
     PacketHandler   *packetHandler;
 
-    GenericDevice(PortHandler *port, long min_value, long max_value, long center_value, double min_radian, double max_radian);
+    GenericDevice(PortHandler *port, long min_value, long max_value, long rad_0_position_value, double min_radian, double max_radian);
 
 public:
     int             ID;
@@ -77,9 +77,9 @@ public:
     virtual long rad2Value(double radian)   = 0;
     virtual double value2Rad(long value)    = 0;
 
-    static GenericDevice *getInstance(PortHandler *port, int id, const char *joint_name, const char *model, float protocol_ver = 2.0);
+    static GenericDevice *getInstance(PortHandler *port, int id, std::string joint_name, std::string model, float protocol_ver = 2.0);
 
-    char*   getJointName();
+    std::string  getJointName();
     PortHandler *getSerialPort();
 
     int     getAddrLength(int addr);
