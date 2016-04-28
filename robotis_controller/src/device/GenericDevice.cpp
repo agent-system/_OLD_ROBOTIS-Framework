@@ -21,10 +21,10 @@
 
 #include <string.h>
 
-#include "../../include/device/DXLPRO.h"
-#include "../../include/device/GenericDevice.h"
-#include "../../include/device/MX28.h"
-#include "../../include/device/UNKNOWN.h"
+#include <robotis_controller/device/DXLPRO.h>
+#include <robotis_controller/device/GenericDevice.h>
+#include <robotis_controller/device/MX28.h>
+#include <robotis_controller/device/UNKNOWN.h>
 
 using namespace ROBOTIS;
 

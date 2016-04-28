@@ -21,7 +21,7 @@
 
 #include <ros/ros.h>
 
-#include "../include/RobotisController.h"
+#include <robotis_controller/RobotisController.h>
 
 using namespace ROBOTIS;
 

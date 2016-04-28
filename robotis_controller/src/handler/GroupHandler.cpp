@@ -6,7 +6,7 @@
  */
 
 
-#include "../../include/handler/GroupHandler.h"
+#include <robotis_controller/handler/GroupHandler.h>
 
 using namespace ROBOTIS;
 

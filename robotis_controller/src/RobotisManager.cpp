@@ -13,12 +13,12 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/JointState.h>
 
-#include "robotis_controller_msgs/ControlWrite.h"
-#include "robotis_controller_msgs/ControlTorque.h"
-#include "robotis_controller_msgs/PublishPosition.h"
+#include <robotis_controller_msgs/ControlWrite.h>
+#include <robotis_controller_msgs/ControlTorque.h>
+#include <robotis_controller_msgs/PublishPosition.h>
 
-#include "../../robotis_controller/include/handler/GroupHandler.h"
-#include "../../robotis_controller/include/RobotisController.h"
+#include <robotis_controller/handler/GroupHandler.h>
+#include <robotis_controller/RobotisController.h>
 
 using namespace ROBOTIS;
 

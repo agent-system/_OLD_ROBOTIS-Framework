@@ -19,10 +19,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "../../include/handler/PacketHandler.h"
+#include <robotis_controller/handler/PacketHandler.h>
 
-#include "../../include/handler/PacketProtocol1.h"
-#include "../../include/handler/PacketProtocol2.h"
+#include <robotis_controller/handler/PacketProtocol1.h>
+#include <robotis_controller/handler/PacketProtocol2.h>
 
 #define LATENCY_TIME        16 //ms (USB2Dynamixel Default Latency Time)
 

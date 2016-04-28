@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "../../include/handler/PacketProtocol1.h"
+#include <robotis_controller/handler/PacketProtocol1.h>
 
 #include <stdio.h>
 #include <stdlib.h>
