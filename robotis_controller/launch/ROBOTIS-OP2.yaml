@@ -3,7 +3,7 @@ serial_ports:
     dxl_tty0:
         port_name: "/dev/ttyUSB0"
         baudrate: 1000000
-        dxl_num: 21
+        dxl_num: 23
         dxl0:
             id: 200
             model: "UNKNOWN"
@@ -109,3 +109,13 @@ serial_ports:
             model: "MX-28"
             protocol: 1.0
             joint_name: "head_tilt"
+        dxl21:
+            id: 21
+            model: "FSR"
+            protocol: 1.0
+            joint_name: "fsr_right"
+        dxl22:
+            id: 20
+            model: "FSR"
+            protocol: 1.0
+            joint_name: "fsr_left"
