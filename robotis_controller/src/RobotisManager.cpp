@@ -55,27 +55,24 @@ int get_id_from_name(std::string name)
 
 void publish_position_callback(const robotis_controller_msgs::PublishPosition::ConstPtr& msg)
 {
-    if(msg->name.size() == 0 || msg->name.size() != msg->publish.size())
-        return;
+  if(msg->name.size() == 0 || msg->name.size() != msg->publish.size()) return;
 
-    for(int i = 0; i < msg->name.size(); i++)
-    {
-        int id = get_id_from_name(msg->name[i]);
-        if(id == -1)
-            continue;
+  for(int i = 0; i < msg->name.size(); i++) {
+    int id = get_id_from_name(msg->name[i]);
+    if(id == -1) continue;
 
-        if(msg->publish[i] == true) {
-            grp_handler.pushBulkRead(id, controller->getDevice(id)->ADDR_PRESENT_POSITION);
-            if ( std::find(publish_list.begin(), publish_list.end(), id) == publish_list.end() )
-                publish_list.push_back(get_id_from_name(msg->name[i]));
-        }
-        else {
-            grp_handler.deleteBulkRead(id);
-            std::vector<int>::iterator iter = std::find(publish_list.begin(), publish_list.end(), id);
-            if(iter != publish_list.end())
-                publish_list.erase(iter);
-        }
+    if(msg->publish[i] == true) { // 6 bytes to send position,velocity and load
+      grp_handler.pushBulkRead(id, controller->getDevice(id)->ADDR_PRESENT_POSITION,6);
+      if ( std::find(publish_list.begin(), publish_list.end(), id) == publish_list.end() )
+	publish_list.push_back(get_id_from_name(msg->name[i]));
     }
+    else {
+      grp_handler.deleteBulkRead(id);
+      std::vector<int>::iterator iter = std::find(publish_list.begin(), publish_list.end(), id);
+      if(iter != publish_list.end())
+	publish_list.erase(iter);
+    }
+  }
 }
 
 void joint_states_callback(const sensor_msgs::JointState::ConstPtr& msg)
@@ -158,6 +155,25 @@ void control_torque_callback(const robotis_controller_msgs::ControlTorque::Const
         }
     }
     pthread_mutex_unlock(&mutex);
+}
+
+void control_position_pgain_callback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+  int n = 0, id = -1, pgain = 0;
+
+  if(msg->name.size() == 0 || msg->name.size() != msg->effort.size())
+    return;
+
+  pthread_mutex_lock(&mutex);
+  syncwrite_param.clear();
+  for(unsigned int idx = 0; idx < msg->name.size(); idx++) {
+    id = get_id_from_name(msg->name[idx].c_str());
+    pgain = msg->effort[idx];
+    if(id != -1) {
+      controller->setPositionPGain(id, pgain);
+    }
+  }
+  pthread_mutex_unlock(&mutex);
 }
 
 void publish_imu(ros::Publisher &pub)
@@ -248,9 +264,10 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   rzmp.x = 41*(127 - rzmp_y)/127.0; rzmp.y = 25*(127 - rzmp_x)/127.0;
   rzmp_pub.publish(rzmp);
 
+  /*
   ROS_INFO("RFSR: %4d, %4d: %4d, %4d, %4d, %4d\r",
 	   (int) rzmp_x, (int)rzmp_y, (int) fsr1, (int)fsr2, (int)fsr3,(int)fsr4);
-
+  */
   controller->read(112, 26, &fsr1, (LENGTH_TYPE) 2,&err); // P_FSR1_L
   controller->read(112, 28, &fsr2, (LENGTH_TYPE) 2,&err); // P_FSR2_L
   controller->read(112, 30, &fsr3, (LENGTH_TYPE) 2,&err); // P_FSR3_L
@@ -269,8 +286,10 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   lzmp.x = 41*(lzmp_y - 127)/127.0; lzmp.y = 25*(lzmp_x - 127)/127.0;
   lzmp_pub.publish(lzmp);
 
+  /*
   ROS_INFO("LFSR: %4d, %4d: %4d, %4d, %4d, %4d\r",
 	   (int) lzmp_x, (int)lzmp_y, (int) fsr1, (int)fsr2, (int)fsr3,(int)fsr4);
+  */
 }
 
 void *comm_thread_proc(void *param)
@@ -320,41 +339,43 @@ void *comm_thread_proc(void *param)
     ready.data = true;
     manager_ready_pub.publish(ready);
 
-    while(ros::ok())
-    {
-        // Run BulkRead
-        grp_handler.runBulkRead();
+    while(ros::ok()) {
+      // Run BulkRead
+      grp_handler.runBulkRead();
 
-        if(syncwrite_param.size() > 0) {
-            pthread_mutex_lock(&mutex);
-            int r = grp_handler.syncWrite(syncwrite_addr, syncwrite_data_length, &syncwrite_param[0], syncwrite_param.size());
-            pthread_mutex_unlock(&mutex);
-        }
-        syncwrite_param.clear();
+      if(syncwrite_param.size() > 0) {
+	pthread_mutex_lock(&mutex);
+	int r = grp_handler.syncWrite(syncwrite_addr, syncwrite_data_length, &syncwrite_param[0], syncwrite_param.size());
+	pthread_mutex_unlock(&mutex);
+      }
+      syncwrite_param.clear();
 
-        // publish joint states
-        sensor_msgs::JointState joint_states;
-        if(publish_list.size() > 0)
-        {
-            for(int i = 0; i < publish_list.size(); i++)
-            {
-                int     _pos    = 0;
-                int     _id     = publish_list[i];
-                if(grp_handler.getReadData(_id, controller->getDevice(_id)->ADDR_PRESENT_POSITION, (long int*)&_pos) == true)
-                {
-                    joint_states.name.push_back(controller->getDevice(_id)->getJointName());
-                    joint_states.position.push_back(controller->getDevice(_id)->value2Rad(_pos));
-                }
-            }
-            joint_states.header.stamp = ros::Time::now();
-            joint_states_pub.publish(joint_states);
-        }
-
+      // publish joint states
+      sensor_msgs::JointState joint_states;
+      if(publish_list.size() > 0) {
+	for(int i = 0; i < publish_list.size(); i++) {
+	  int     _pos    = 0;
+	  int     _id     = publish_list[i];
+	  if(grp_handler.getReadData(_id, controller->getDevice(_id)->ADDR_PRESENT_POSITION, (long int*)&_pos, 2) == true) {
+	    joint_states.name.push_back(controller->getDevice(_id)->getJointName());
+	    joint_states.position.push_back(controller->getDevice(_id)->value2Rad(_pos));
+	    /*
+	    if(grp_handler.getReadData(_id, controller->getDevice(_id)->ADDR_PRESENT_VELOCITY, (long int*)&_pos, 2) == true) {
+	      joint_states.velocity.push_back(_pos<1024?(-_pos):(_pos - 1024));
+	    }
+	    */
+	    if(grp_handler.getReadData(_id, controller->getDevice(_id)->ADDR_PRESENT_LOAD, (long int*)&_pos, 2) == true) {
+	      joint_states.effort.push_back(_pos<1024?(-_pos):(_pos - 1024));
+	    }
+	  }
+	}
+	joint_states.header.stamp = ros::Time::now();
+	joint_states_pub.publish(joint_states);
+      }
+      
 	publish_imu(imu_pub);
 	if(publish_zmp)
 	  publish_zmp_from_fsr(rzmp_pub, lzmp_pub, rfsr_pub, lfsr_pub);
-#if 0
-#endif
 
         ros::spinOnce();
         control_rate.sleep();
@@ -371,6 +392,7 @@ int main(int argc, char **argv)
     ros::Subscriber publish_position_sub    = nh.subscribe("/publish_position", 10, publish_position_callback);
     ros::Subscriber control_write_sub       = nh.subscribe("/control_write", 10, control_write_callback);
     ros::Subscriber control_torque_sub      = nh.subscribe("/control_torque", 10, control_torque_callback);
+    ros::Subscriber control_pos_pgain_sub   = nh.subscribe("/control_pos_pgain", 10, control_position_pgain_callback);
 
     ros::Subscriber joint_states_sub;
     std::string topic_name;
