@@ -258,7 +258,7 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   rfoot.wrench.torque.y = 25*(fsr3 - fsr4)/1000.0; // Nmm
 
   rfoot.header.stamp = ros::Time::now();
-  rfoot.header.frame_id = "base_link";
+  rfoot.header.frame_id = "r_ank_roll_link";
   rfsr_pub.publish(rfoot);
 
   rzmp.x = 41*(127 - rzmp_y)/127.0; rzmp.y = 25*(127 - rzmp_x)/127.0;
@@ -280,7 +280,7 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   lfoot.wrench.torque.y = -25*(fsr3 - fsr4)/1000.0; // Nmm
 
   lfoot.header.stamp = ros::Time::now();
-  lfoot.header.frame_id = "base_link";
+  lfoot.header.frame_id = "l_ank_roll_link";
   lfsr_pub.publish(lfoot);
 
   lzmp.x = 41*(lzmp_y - 127)/127.0; lzmp.y = 25*(lzmp_x - 127)/127.0;
