@@ -254,8 +254,8 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   controller->read(111, 35, &rzmp_y, (LENGTH_TYPE) 1,&err); // P_FSR_Y
 
   rfoot.wrench.force.z = (fsr1 + fsr2 + fsr3 + fsr4)/1000.0; // N
-  rfoot.wrench.torque.x = -41*(fsr1 - fsr2)/1000.0; // Nmm
-  rfoot.wrench.torque.y = 25*(fsr3 - fsr4)/1000.0; // Nmm
+  rfoot.wrench.torque.x = 0.025*((fsr1+fsr4) - (fsr2+fsr3))/1000.0; // Nm
+  rfoot.wrench.torque.y = 0.041*((fsr3+fsr4) - (fsr1+fsr2))/1000.0; // Nm
 
   rfoot.header.stamp = ros::Time::now();
   rfoot.header.frame_id = "r_ank_roll_link";
@@ -276,8 +276,8 @@ void publish_zmp_from_fsr(ros::Publisher &rzmp_pub, ros::Publisher &lzmp_pub,
   controller->read(112, 35, &lzmp_y, (LENGTH_TYPE) 1,&err); // P_FSR_Y
 
   lfoot.wrench.force.z = (fsr1 + fsr2 + fsr3 + fsr4)/1000.0; // N
-  lfoot.wrench.torque.x = 41*(fsr1 - fsr2)/1000.0; // Nmm
-  lfoot.wrench.torque.y = -25*(fsr3 - fsr4)/1000.0; // Nmm
+  lfoot.wrench.torque.x = 0.025*((fsr2+fsr3) - (fsr1+fsr4))/1000.0; // Nm
+  lfoot.wrench.torque.y = 0.041*((fsr1+fsr2) - (fsr3+fsr4))/1000.0; // Nm
 
   lfoot.header.stamp = ros::Time::now();
   lfoot.header.frame_id = "l_ank_roll_link";
