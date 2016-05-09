@@ -90,10 +90,6 @@ add_executable(robotis_manager
   src/RobotisManager.cpp
 )
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-add_dependencies(robotis_manager robotis_manager_generate_messages_cpp)
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robotis_controller
   yaml-cpp
